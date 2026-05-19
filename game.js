@@ -157,7 +157,7 @@ class GameState {
     this.save();
     
     // Save to Supabase if available and user is logged in
-    if (isSupabaseEnabled() && getCurrentUser()) {
+    if (isSupabaseEnabled() && getCurrentUser() && getCurrentUser().email) {
       await saveGameRun({
         difficulty: this.diff,
         score: this.score,
@@ -173,17 +173,20 @@ class GameState {
     this.save();
   }
 
-  async loadLeaderboardFromSupabase() {
+  async loadLeaderboardFromSupabase(difficultyFilter = null) {
     if (isSupabaseEnabled()) {
-      const supabaseLeaderboard = await fetchLeaderboard(null, 10);
+      const supabaseLeaderboard = await fetchLeaderboard(difficultyFilter, 10);
       if (supabaseLeaderboard && supabaseLeaderboard.length > 0) {
         this.lb = supabaseLeaderboard.map(item => ({
           score: item.score,
+          username: item.username || 'Anonymous',
           diff: item.difficulty,
           done: item.tasks_completed,
           total: item.tasks_total,
           ts: new Date(item.created_at).getTime()
         }));
+      } else {
+        this.lb = [];
       }
     }
   }
@@ -211,3 +214,11 @@ function startGameSession() {
   G.setTasks(selectedTasks);
   window.location.href = 'game.html';
 }
+
+// Expose globally for module compatibility
+window.TASKS = TASKS;
+window.GameState = GameState;
+window.G = G;
+window.shuffle = shuffle;
+window.startGameSession = startGameSession;
+

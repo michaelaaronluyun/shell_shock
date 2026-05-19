@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Game - Shell Shock</title>
 <link rel="stylesheet" href="styles.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4"></script>
-<script src="supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script type="module" src="supabase.js"></script>
 </head>
 <body>
 <div id="root" class="game-page">
@@ -18,9 +18,12 @@
     <div class="hsep"></div>
     <div class="hi"><div class="hl">Streak</div><div class="hv" id="h-streak" style="color:var(--y)">0</div></div>
     <div class="hsep"></div>
-    <div class="hi hud-timer">
-      <div class="hl">Time <span id="h-time" style="color:var(--wh)">30s</span></div>
-      <div class="tbar-t"><div class="tbar-f" id="tbar" style="width:100%"></div></div>
+    <div class="hi hud-timer" style="min-width:180px;">
+      <div class="hl" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+        <span>Time Remaining</span>
+        <span id="h-time" style="color:var(--wh); font-size:16px; font-weight:800; font-family:'Syne', sans-serif;">30s</span>
+      </div>
+      <div class="tbar-t" style="height:8px;"><div class="tbar-f" id="tbar" style="width:100%"></div></div>
     </div>
   </div>
   <div class="task-panel">
@@ -35,7 +38,13 @@
   </div>
 </div>
 
-<script src="game.js"></script>
+<!-- Countdown Overlay -->
+<div id="countdown-overlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(13,17,23,0.95); z-index:200; display:flex; flex-direction:column; justify-content:center; align-items:center; font-family:'Syne',sans-serif;">
+  <div id="countdown-number" style="font-size:120px; font-weight:800; color:var(--y); transition:transform 0.15s ease-out; transform: scale(1);">3</div>
+  <div id="countdown-text" style="font-size:16px; color:var(--gr); text-transform:uppercase; letter-spacing:2px; margin-top:10px;">Get Ready</div>
+</div>
+
+<script type="module" src="game.js"></script>
 <script>
 // Initialize Supabase before starting game
 window.addEventListener('load', async () => {
@@ -54,9 +63,9 @@ let commandInput = document.getElementById('ci');
 G.restoreTasks();
 
 // Check if tasks are loaded - if not, go back to difficulty selection
-if (!G.tasks || G.tasks.length === 0) {
+if (!window.G || !window.G.tasks || window.G.tasks.length === 0) {
   console.warn('No tasks loaded. Redirecting to difficulty selection...');
-  window.location.href = 'difficulty.html';
+  window.location.replace('difficulty.html');
   return;
 }
 
@@ -194,11 +203,42 @@ function quitGame() {
   }
 }
 
+function startCountdown(onComplete) {
+  let count = 3;
+  const overlay = document.getElementById('countdown-overlay');
+  const numEl = document.getElementById('countdown-number');
+  const txtEl = document.getElementById('countdown-text');
+  
+  commandInput.disabled = true;
+  
+  const interval = setInterval(() => {
+    count--;
+    if (count > 0) {
+      numEl.textContent = count;
+      numEl.style.transform = 'scale(1.3)';
+      setTimeout(() => { numEl.style.transform = 'scale(1)'; }, 150);
+    } else if (count === 0) {
+      numEl.textContent = 'GO!';
+      numEl.style.color = 'var(--g)';
+      txtEl.textContent = 'Race the clock!';
+      numEl.style.transform = 'scale(1.3)';
+      setTimeout(() => { numEl.style.transform = 'scale(1)'; }, 150);
+    } else {
+      clearInterval(interval);
+      overlay.style.display = 'none';
+      commandInput.disabled = false;
+      commandInput.focus();
+      onComplete();
+    }
+  }, 1000);
+}
+
 // Start the game
 addLine('inf', '[Bash Blitz] Type the correct Linux command. Faster = more points!');
 addLine('out', '─'.repeat(44));
-loadTask();
-commandInput.focus();
+startCountdown(() => {
+  loadTask();
+});
 
 // Input handling
 commandInput.addEventListener('keydown', e => {
@@ -224,3 +264,6 @@ commandInput.addEventListener('keydown', e => {
 </script>
 </body>
 </html>
+
+
+

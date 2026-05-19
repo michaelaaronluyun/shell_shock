@@ -1,58 +1,202 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Shell Shock - Linux Command Speedrun Game</title>
-<link rel="stylesheet" href="styles.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4"></script>
-<script src="supabase.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shell Shock - Linux Command Game</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script type="module" src="supabase.js"></script>
 </head>
+
 <body>
-<div id="root">
-  <div class="tb"><div class="dots"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div></div><div class="tbtxt">Shell Shock</div><div class="tbright"></div></div>
-  <div class="splash-page">
-    <div class="logo"><pre style="font-size: 0.5em; margin: 0;">   ______ ________   __     
+  <div id="root">
+    <div class="tb">
+      <div class="dots">
+        <div class="dot dr"></div>
+        <div class="dot dy"></div>
+        <div class="dot dg"></div>
+      </div>
+      <div class="tbtxt">Shell Shock</div>
+      <div class="tbright" style="display:flex; align-items:center; gap:12px;">
+        <span id="profile-name" style="color:var(--g); font-weight:700; font-size:12px;"></span>
+        <button id="auth-login-btn" class="btn btn-sm" onclick="showAuthModal()" style="display:none;">Sign In</button>
+        <button id="auth-logout-btn" class="btn btn-sm" onclick="handleSignOut()"
+          style="display:none; border-color:var(--br); color:var(--gr);">Sign Out</button>
+      </div>
+    </div>
+    <div class="splash-page">
+      <div class="logo">
+        <pre style="font-size: 0.5em; margin: 0;">   ______ ________   __     
   / __/ // / __/ /  / /     
  _\ \/ _  / _// /__/ /__    
 /___/_//_/___/____/____/_ __
   / __/ // / __ \/ ___/ //_/
  _\ \/ _  / /_/ / /__/ ,<   
 /___/_//_/\____/\___/_/|_|  
-                            </pre></div>
-    <div class="logo-sub">race the clock · master the terminal</div>
-    <div class="splash-ascii">
-$ ls challenges/<br>
-<span style="color:#39d353">✓</span> pipe_master   <span style="color:#39d353">12.3s  +420pts</span><br>
-<span style="color:#39d353">✓</span> grep_hunter    <span style="color:#39d353">8.7s   +380pts</span><br>
-<span style="color:#e3b341">◎</span> awk_wizard    <span style="color:#e3b341">30.0s  +200pts</span><br>
-<span style="color:#f85149">✗</span> sed_surgeon   <span style="color:#f85149">timeout  +0pts</span>
-    </div>
-    <div class="splash-stats">
-      <div><div class="ss-v" id="s-best">—</div><div class="ss-l">Best Score</div></div>
-      <div><div class="ss-v" id="s-runs">0</div><div class="ss-l">Runs</div></div>
-      <div><div class="ss-v" id="s-tasks">0</div><div class="ss-l">Tasks Done</div></div>
-    </div>
-    <div class="splash-btns">
-      <button class="btn" onclick="location.href='difficulty.html'">▶ play</button>
-      <button class="btn-y btn" onclick="location.href='leaderboard.html'">leaderboard</button>
+                            </pre>
+      </div>
+      <div class="logo-sub">race the clock · master the terminal</div>
+      <div class="splash-ascii">
+        $ ls challenges/<br>
+        <span style="color:#39d353">✓</span> pipe_master <span style="color:#39d353">12.3s +420pts</span><br>
+        <span style="color:#39d353">✓</span> grep_hunter <span style="color:#39d353">8.7s +380pts</span><br>
+        <span style="color:#e3b341">◎</span> awk_wizard <span style="color:#e3b341">30.0s +200pts</span><br>
+        <span style="color:#f85149">✗</span> sed_surgeon <span style="color:#f85149">timeout +0pts</span>
+      </div>
+      <div class="splash-stats">
+        <div>
+          <div class="ss-v" id="s-best">—</div>
+          <div class="ss-l">Best Score</div>
+        </div>
+        <div>
+          <div class="ss-v" id="s-runs">0</div>
+          <div class="ss-l">Runs</div>
+        </div>
+        <div>
+          <div class="ss-v" id="s-tasks">0</div>
+          <div class="ss-l">Tasks Done</div>
+        </div>
+      </div>
+      <div class="splash-btns">
+        <button class="btn" onclick="location.href='difficulty.html'">▶ play</button>
+        <button class="btn-y btn" onclick="location.href='leaderboard.html'">leaderboard</button>
+      </div>
     </div>
   </div>
-</div>
 
-<script src="game.js"></script>
-<script>
-// Initialize Supabase
-window.addEventListener('load', async () => {
-  await initSupabase();
-  if (!getCurrentUser()) {
-    await signInAnonymously();
-  }
-  // Update stats (will load from localStorage or Supabase)
-  document.getElementById('s-best').textContent = G.stats.best !== null ? G.stats.best : '—';
-  document.getElementById('s-runs').textContent = G.stats.runs;
-  document.getElementById('s-tasks').textContent = G.stats.totalTasks;
-});
-</script>
+  <!-- Auth Modal -->
+  <div id="auth-modal"
+    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(13,17,23,0.9); z-index:100; justify-content:center; align-items:center;">
+    <div
+      style="background:var(--sf); padding:24px; border-radius:8px; border:1px solid var(--br); width:320px; display:flex; flex-direction:column; gap:12px;">
+      <h3 id="auth-title" style="font-family:'Syne',sans-serif; color:var(--wh); margin-bottom:8px;">Sign In</h3>
+      <input type="text" id="auth-username" placeholder="Username"
+        style="display:none; background:var(--bg); border:1px solid var(--br); color:var(--wh); padding:10px; border-radius:4px; font-family:'JetBrains Mono',monospace; outline:none;" />
+      <input type="email" id="auth-email" placeholder="Email"
+        style="background:var(--bg); border:1px solid var(--br); color:var(--wh); padding:10px; border-radius:4px; font-family:'JetBrains Mono',monospace; outline:none;" />
+      <input type="password" id="auth-password" placeholder="Password"
+        style="background:var(--bg); border:1px solid var(--br); color:var(--wh); padding:10px; border-radius:4px; font-family:'JetBrains Mono',monospace; outline:none;" />
+      <div id="auth-error" style="color:var(--r); font-size:11px;"></div>
+      <button id="auth-action-btn" class="btn btn-sm" onclick="handleAuth()">Sign In</button>
+      <div style="text-align:center; margin-top:8px; font-size:11px; color:var(--gr);">
+        <span id="auth-toggle-text">Don't have an account?</span>
+        <button id="auth-toggle-btn" class="btn btn-sm btn-y"
+          style="padding:2px 6px; border:none; text-decoration:underline; cursor:pointer;"
+          onclick="toggleAuthMode()">Sign Up</button>
+      </div>
+      <button class="btn btn-sm" style="border-color:transparent; color:var(--gr); margin-top:4px;"
+        onclick="document.getElementById('auth-modal').style.display='none'">Cancel</button>
+    </div>
+  </div>
+
+  <script type="module" src="game.js"></script>
+  <script>
+    let authMode = 'login';
+    const RANDOM_NAMES = ['pipe_master', 'grep_hunter', 'awk_wizard', 'sed_surgeon', 'bash_boss', 'vim_veteran', 'curl_commander', 'tar_tactician', 'sudo_samurai', 'ssh_specialist'];
+
+    function getGuestName() {
+      let name = localStorage.getItem('shellShockGuestName');
+      if (!name) {
+        name = RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)] + '_' + Math.floor(Math.random() * 1000);
+        localStorage.setItem('shellShockGuestName', name);
+      }
+      return name;
+    }
+
+    function updateProfileUI() {
+      const user = window.getCurrentUser();
+      const nameEl = document.getElementById('profile-name');
+      const loginBtn = document.getElementById('auth-login-btn');
+      const logoutBtn = document.getElementById('auth-logout-btn');
+
+      if (user && user.email) {
+        nameEl.textContent = user.user_metadata?.username || user.email.split('@')[0];
+        loginBtn.style.display = 'none';
+        logoutBtn.style.display = 'block';
+      } else {
+        nameEl.textContent = getGuestName();
+        loginBtn.style.display = 'block';
+        logoutBtn.style.display = 'none';
+      }
+    }
+
+    window.toggleAuthMode = function () {
+      authMode = authMode === 'login' ? 'signup' : 'login';
+      document.getElementById('auth-error').textContent = '';
+
+      if (authMode === 'signup') {
+        document.getElementById('auth-title').textContent = 'Sign Up';
+        document.getElementById('auth-action-btn').textContent = 'Sign Up';
+        document.getElementById('auth-toggle-text').textContent = 'Already have an account?';
+        document.getElementById('auth-toggle-btn').textContent = 'Sign In';
+        document.getElementById('auth-username').style.display = 'block';
+      } else {
+        document.getElementById('auth-title').textContent = 'Sign In';
+        document.getElementById('auth-action-btn').textContent = 'Sign In';
+        document.getElementById('auth-toggle-text').textContent = "Don't have an account?";
+        document.getElementById('auth-toggle-btn').textContent = 'Sign Up';
+        document.getElementById('auth-username').style.display = 'none';
+      }
+    };
+
+    window.showAuthModal = function () {
+      document.getElementById('auth-error').textContent = '';
+      document.getElementById('auth-modal').style.display = 'flex';
+    };
+
+    window.handleAuth = async function () {
+      const username = document.getElementById('auth-username').value;
+      const email = document.getElementById('auth-email').value;
+      const pass = document.getElementById('auth-password').value;
+      const errEl = document.getElementById('auth-error');
+
+      if (!email || !pass) {
+        errEl.textContent = 'Please enter email and password.';
+        return;
+      }
+      if (authMode === 'signup' && !username) {
+        errEl.textContent = 'Please choose a username.';
+        return;
+      }
+
+      errEl.textContent = 'Loading...';
+      let result;
+
+      if (authMode === 'login') {
+        result = await window.signInWithEmail(email, pass);
+      } else {
+        result = await window.signUpWithEmail(email, pass, username);
+      }
+
+      if (result) {
+        document.getElementById('auth-modal').style.display = 'none';
+        updateProfileUI();
+      } else {
+        errEl.textContent = 'Authentication failed. Check your credentials.';
+      }
+    };
+
+    window.handleSignOut = async function () {
+      await window.signOut();
+      await window.signInAnonymously();
+      updateProfileUI();
+    };
+
+    // Initialize Supabase
+    window.addEventListener('load', async () => {
+      await window.initSupabase();
+      if (!window.getCurrentUser()) {
+        await window.signInAnonymously();
+      }
+      updateProfileUI();
+      // Update stats (will load from localStorage or Supabase)
+      document.getElementById('s-best').textContent = window.G.stats.best !== null ? window.G.stats.best : '—';
+      document.getElementById('s-runs').textContent = window.G.stats.runs;
+      document.getElementById('s-tasks').textContent = window.G.stats.totalTasks;
+    });
+  </script>
 </body>
+
 </html>

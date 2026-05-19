@@ -5,27 +5,42 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Leaderboard - Shell Shock</title>
 <link rel="stylesheet" href="styles.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4"></script>
-<script src="supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script type="module" src="supabase.js"></script>
 </head>
 <body>
 <div id="root" class="lb-page">
   <div class="tb"><div class="dots"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div></div><div class="tbtxt">Leaderboard</div><button class="btn btn-sm" style="border-color:var(--br);color:var(--gr);" onclick="location.href='index.html'">← back</button></div>
   <div class="lb-body">
+    <div style="display:flex; gap:8px; margin-bottom:16px; justify-content:center;">
+      <button class="btn btn-sm btn-y" id="filter-all" onclick="setFilter('all')">All</button>
+      <button class="btn btn-sm" id="filter-easy" onclick="setFilter('easy')">Easy</button>
+      <button class="btn btn-sm" id="filter-normal" onclick="setFilter('normal')">Normal</button>
+      <button class="btn btn-sm" id="filter-hard" onclick="setFilter('hard')">Hard</button>
+    </div>
     <div id="lb-content"></div>
     <div class="lb-acts">
       <button class="btn" onclick="location.href='difficulty.html'">▶ play</button>
-      <button class="btn btn-r btn-sm" onclick="clearLeaderboard()">clear scores</button>
     </div>
   </div>
 </div>
 
-<script src="game.js"></script>
+<script type="module" src="game.js"></script>
 <script>
+let currentFilter = 'all';
+
+async function setFilter(diff) {
+  currentFilter = diff;
+  ['all', 'easy', 'normal', 'hard'].forEach(d => {
+    document.getElementById('filter-' + d).className = d === diff ? 'btn btn-sm btn-y' : 'btn btn-sm';
+  });
+  await renderLeaderboard();
+}
+
 async function renderLeaderboard() {
   // Load from Supabase first, fall back to localStorage
   if (isSupabaseEnabled()) {
-    await G.loadLeaderboardFromSupabase();
+    await G.loadLeaderboardFromSupabase(currentFilter);
   }
   
   const el = document.getElementById('lb-content');
@@ -33,25 +48,20 @@ async function renderLeaderboard() {
     el.innerHTML = '<div class="lb-empty">No runs yet. Play a game to get on the board!</div>';
     return;
   }
-  el.innerHTML = '<div class="lb-table"><div class="lb-hdr"><span>Rank</span><span>Score</span><span style="text-align:right">Tasks</span><span style="text-align:right">Diff</span><span style="text-align:right">Time</span></div>' +
+  el.innerHTML = '<div class="lb-table" style="font-size:14px;"><div class="lb-hdr"><span>Rank</span><span style="flex:1">Username</span><span>Score</span><span style="text-align:right">Tasks</span><span style="text-align:right">Diff</span><span style="text-align:right">Time</span></div>' +
     G.lb.map((r, i) => {
       const cls = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
       const medals = ['🥇', '🥈', '🥉'];
+      const username = r.username || 'Anonymous';
       return `<div class="lb-row ${cls}">
         <span class="lb-rank">${medals[i] || '#' + (i + 1)}</span>
+        <span class="lb-user" style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; padding-right:8px;" title="${username}">${username}</span>
         <span class="lb-score">${r.score}</span>
         <span class="lb-tasks">${r.done}/${r.total}</span>
         <span class="lb-diff ${r.diff}">${r.diff}</span>
         <span style="color:var(--gr);text-align:right;font-size:11px">${new Date(r.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
       </div>`;
     }).join('') + '</div>';
-}
-
-async function clearLeaderboard() {
-  if (confirm('Clear all leaderboard scores?')) {
-    await G.clearLeaderboard();
-    await renderLeaderboard();
-  }
 }
 
 // Initialize Supabase and render leaderboard
@@ -65,3 +75,6 @@ window.addEventListener('load', async () => {
 </script>
 </body>
 </html>
+
+
+

@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Results - Shell Shock</title>
 <link rel="stylesheet" href="styles.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4"></script>
-<script src="supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script type="module" src="supabase.js"></script>
 </head>
 <body>
 <div id="root" class="results-page">
@@ -29,7 +29,7 @@
   </div>
 </div>
 
-<script src="game.js"></script>
+<script type="module" src="game.js"></script>
 <script>
 // Initialize Supabase
 window.addEventListener('load', async () => {
@@ -41,17 +41,23 @@ window.addEventListener('load', async () => {
 });
 
 function displayResults() {
+  if (!window.G || !window.G.log || window.G.log.length === 0) {
+    window.location.replace('index.html');
+    return;
+  }
+
   // Display results
-  const pct = G.log.filter(x => x.done).length / G.tasks.length;
+  const totalTasks = window.G.log.length > 0 ? window.G.log.length : 5;
+  const pct = window.G.log.filter(x => x.done).length / totalTasks;
   const grade = pct === 1 ? 'S RANK — FLAWLESS' : pct >= .8 ? 'A RANK — EXCELLENT' : pct >= .6 ? 'B RANK — SOLID' : pct >= .4 ? 'C RANK — KEEP GOING' : 'F RANK — KEEP PRACTICING';
   const gradeColor = pct === 1 ? 'var(--g)' : pct >= .8 ? 'var(--c)' : pct >= .6 ? 'var(--y)' : 'var(--r)';
 
   document.getElementById('r-grade').textContent = grade;
   document.getElementById('r-grade').style.color = gradeColor;
-  document.getElementById('r-tb').textContent = G.diff + ' · results';
-  document.getElementById('r-score').textContent = G.score;
+  document.getElementById('r-tb').textContent = window.G.diff + ' · results';
+  document.getElementById('r-score').textContent = window.G.score;
   document.getElementById('r-score').style.color = gradeColor;
-  document.getElementById('r-sub').textContent = G.log.filter(x => x.done).length + '/' + G.tasks.length + ' tasks completed · ' + G.diff + ' mode';
+  document.getElementById('r-sub').textContent = window.G.log.filter(x => x.done).length + '/' + totalTasks + ' tasks completed · ' + window.G.diff + ' mode';
 
   document.getElementById('r-log').innerHTML = G.log.map((t, i) => `
     <div class="tl-row">
@@ -65,3 +71,6 @@ function displayResults() {
 </script>
 </body>
 </html>
+
+
+

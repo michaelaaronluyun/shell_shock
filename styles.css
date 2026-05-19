@@ -52,12 +52,12 @@ body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--wh)
 
 /* ── GAME ── */
 .game-page{display:flex;flex-direction:column;height:100vh;}
-.hud{background:var(--sf);border-bottom:1px solid var(--br);padding:10px 16px;display:grid;grid-template-columns:auto auto auto auto 1fr;gap:16px;align-items:center;flex-shrink:0;overflow-x:auto;}
+.hud{background:var(--sf);border-bottom:1px solid var(--br);padding:10px 24px;display:grid;grid-template-columns:auto auto auto auto auto auto 1fr;gap:24px;align-items:center;flex-shrink:0;overflow-x:auto;}
 .hi{display:flex;flex-direction:column;gap:2px;white-space:nowrap;}
 .hl{font-size:9px;color:var(--gr);letter-spacing:1.5px;text-transform:uppercase;}
 .hv{font-size:clamp(13px,3vw,15px);font-weight:700;}
-.hsep{width:1px;height:30px;background:var(--br);display:none;}
-.hud-timer{flex:1;min-width:100px;}
+.hsep{width:1px;height:24px;background:var(--br);display:block;}
+.hud-timer{flex:1;min-width:150px;}
 .tbar-t{background:#21262d;height:5px;border-radius:3px;overflow:hidden;}
 .tbar-f{height:100%;background:var(--g);transition:width .1s linear,background .3s;border-radius:3px;}
 

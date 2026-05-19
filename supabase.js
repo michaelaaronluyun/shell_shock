@@ -1,7 +1,7 @@
 // Supabase Configuration
 
-const SUPABASE_URL = 'SUPABASE_URL';
-const SUPABASE_ANON_KEY = 'SUPABASE_ANON_KEY';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
     
 let supabaseClient = null;
 let currentUser = null;
@@ -46,13 +46,18 @@ async function signInAnonymously() {
 }
 
 // Sign up with email
-async function signUpWithEmail(email, password) {
+async function signUpWithEmail(email, password, username) {
   if (!supabaseClient) return null;
   
   try {
     const { data, error } = await supabaseClient.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          username: username
+        }
+      }
     });
     if (error) throw error;
     currentUser = data.user;
@@ -103,6 +108,7 @@ async function saveGameRun(runData) {
       .insert([
         {
           user_id: currentUser.id,
+          username: currentUser.user_metadata?.username || (currentUser.email ? currentUser.email.split('@')[0] : 'Guest'),
           difficulty: runData.difficulty,
           score: runData.score,
           tasks_completed: runData.tasksCompleted,
@@ -128,11 +134,11 @@ async function fetchLeaderboard(difficulty = null, limit = 10) {
   try {
     let query = supabaseClient
       .from('game_runs')
-      .select('id, user_id, difficulty, score, tasks_completed, tasks_total, created_at')
+      .select('id, user_id, username, difficulty, score, tasks_completed, tasks_total, created_at')
       .order('score', { ascending: false })
       .limit(limit);
     
-    if (difficulty) {
+    if (difficulty && difficulty !== 'all') {
       query = query.eq('difficulty', difficulty);
     }
     
@@ -182,3 +188,15 @@ function getCurrentUser() {
 function isSupabaseEnabled() {
   return supabaseClient !== null;
 }
+
+// Expose functions globally since Vite modules have local scope
+window.initSupabase = initSupabase;
+window.signInAnonymously = signInAnonymously;
+window.signUpWithEmail = signUpWithEmail;
+window.signInWithEmail = signInWithEmail;
+window.signOut = signOut;
+window.saveGameRun = saveGameRun;
+window.fetchLeaderboard = fetchLeaderboard;
+window.fetchUserStats = fetchUserStats;
+window.getCurrentUser = getCurrentUser;
+window.isSupabaseEnabled = isSupabaseEnabled;

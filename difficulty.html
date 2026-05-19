@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Select Difficulty - Shell Shock</title>
 <link rel="stylesheet" href="styles.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4"></script>
-<script src="supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script type="module" src="supabase.js"></script>
 </head>
 <body>
 <div id="root">
@@ -49,7 +49,7 @@
   </div>
 </div>
 
-<script src="game.js"></script>
+<script type="module" src="game.js"></script>
 <script>
 function selectDiff(d) {
   G.pickDiff(d);
@@ -75,3 +75,6 @@ window.addEventListener('load', async () => {
 </script>
 </body>
 </html>
+
+
+
