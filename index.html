@@ -63,6 +63,11 @@
         <button class="btn" onclick="location.href='difficulty.html'">▶ play</button>
         <button class="btn-y btn" onclick="location.href='leaderboard.html'">leaderboard</button>
       </div>
+      <!-- Info Trigger Buttons -->
+      <div class="splash-btns" style="margin-top:16px; gap:8px;">
+        <button class="btn btn-sm btn-gr" onclick="showInfoModal('howtoplay')">How to Play</button>
+        <button class="btn btn-sm btn-gr" onclick="showInfoModal('syntax')">Syntax Guide</button>
+      </div>
     </div>
   </div>
 
@@ -70,7 +75,7 @@
   <div id="auth-modal"
     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(13,17,23,0.9); z-index:100; justify-content:center; align-items:center;">
     <div
-      style="background:var(--sf); padding:24px; border-radius:8px; border:1px solid var(--br); width:320px; display:flex; flex-direction:column; gap:12px;">
+      style="background:var(--sf); padding:24px; border-radius:8px; border:1px solid var(--br); width:320px; max-width:90%; display:flex; flex-direction:column; gap:12px;">
       <h3 id="auth-title" style="font-family:'Syne',sans-serif; color:var(--wh); margin-bottom:8px;">Sign In</h3>
       <input type="text" id="auth-username" placeholder="Username"
         style="display:none; background:var(--bg); border:1px solid var(--br); color:var(--wh); padding:10px; border-radius:4px; font-family:'JetBrains Mono',monospace; outline:none;" />
@@ -91,10 +96,120 @@
     </div>
   </div>
 
+  <!-- Info Modal -->
+  <div id="info-modal"
+    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(13,17,23,0.9); z-index:100; justify-content:center; align-items:center; font-family:'Syne',sans-serif;">
+    <div
+      style="background:var(--sf); padding:24px; border-radius:12px; border:1px solid var(--br); width:480px; max-width:92%; display:flex; flex-direction:column; max-height:85vh; box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--br); padding-bottom:12px; flex-shrink:0;">
+        <h3 id="info-title" style="color:var(--g); font-weight:800; font-size:20px;">Guide</h3>
+        <button class="btn btn-sm" style="border-color:transparent; color:var(--gr); padding:4px 8px; cursor:pointer;" onclick="closeInfoModal()">✕</button>
+      </div>
+      <div id="info-content" style="color:var(--gr); font-size:13px; line-height:1.6; font-family:'JetBrains Mono',monospace; flex:1; overflow-y:auto; padding:16px 0;">
+        <!-- Dynamic Content -->
+      </div>
+      <div style="text-align:right; border-top:1px solid var(--br); padding-top:12px; display:flex; justify-content:flex-end; flex-shrink:0;">
+        <button class="btn btn-sm" onclick="closeInfoModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="game.js"></script>
   <script>
     let authMode = 'login';
     const RANDOM_NAMES = ['pipe_master', 'grep_hunter', 'awk_wizard', 'sed_surgeon', 'bash_boss', 'vim_veteran', 'curl_commander', 'tar_tactician', 'sudo_samurai', 'ssh_specialist'];
+
+    const INFO_CONTENT = {
+      howtoplay: `
+        <p style="margin-bottom:12px;"><strong style="color:var(--wh);">Objective:</strong> Execute Linux commands in the simulated terminal to solve tasks before time runs out.</p>
+        <p style="margin-bottom:12px;"><strong style="color:var(--wh);">Scoring:</strong> Points are awarded based on completion speed. Maintaining a correct streak grants bonus score multipliers!</p>
+        <p style="margin-bottom:8px;"><strong style="color:var(--wh);">Difficulty Levels:</strong></p>
+        <ul style="margin-left:20px; margin-bottom:12px; list-style-type:square; color:var(--gr);">
+          <li><strong style="color:#39d353">Easy:</strong> Basic filesystem commands (ls, cd, pwd, whoami, clear, date, echo)</li>
+          <li><strong style="color:#e3b341">Normal:</strong> Text selection & piping (wc, sort, grep, head, mv, ps)</li>
+          <li><strong style="color:#f85149">Hard:</strong> Regex replacement, awk, sed, backgrounding, chmod, and complex piping</li>
+        </ul>
+        <p style="margin-top:12px;"><strong style="color:var(--wh);">Pro Tips:</strong> Master keyboard shortcuts, practice common patterns, and learn to chain commands efficiently.</p>
+      `,
+      syntax: `
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          <div>
+            <strong style="color:var(--wh); display:block; margin-bottom:6px; border-bottom:1px solid var(--br); padding-bottom:4px;">1. Navigation & General Info</strong>
+            <ul style="list-style:none; padding:0; margin:0; line-height:1.8;">
+              <li><code style="color:#79c0ff; font-weight:bold;">pwd</code> — Print current working directory</li>
+              <li><code style="color:#79c0ff; font-weight:bold;">ls</code> — List directory contents (e.g. <code style="color:#58a6ff;">ls -la</code>)</li>
+              <li><code style="color:#79c0ff; font-weight:bold;">whoami</code> — Print current user name</li>
+              <li><code style="color:#79c0ff; font-weight:bold;">clear</code> — Clear the terminal display</li>
+              <li><code style="color:#79c0ff; font-weight:bold;">date</code> — Display current system date & time</li>
+              <li><code style="color:#79c0ff; font-weight:bold;">echo [msg]</code> — Print message text to stdout</li>
+              <li><code style="color:#79c0ff; font-weight:bold;">df -h</code> / <code style="color:#79c0ff; font-weight:bold;">du -h</code> — Show free/used disk space</li>
+            </ul>
+          </div>
+          <div>
+            <strong style="color:var(--wh); display:block; margin-bottom:6px; border-bottom:1px solid var(--br); padding-bottom:4px;">2. Files & File Contents</strong>
+            <ul style="list-style:none; padding:0; margin:0; line-height:1.8;">
+              <li><code style="color:#79c0ff; font-weight:bold;">cat [file]</code> — Print entire file content</li>
+              <li><code style="color:#79c0ff; font-weight:bold;">tac [file]</code> — Print file in reverse order (bottom to top)</li>
+              <li><code style="color:#79c0ff; font-weight:bold;">head -n [N] [file]</code> — Get first N lines of a file</li>
+              <li><code style="color:#79c0ff; font-weight:bold;">wc -l [file]</code> — Count total lines in a file</li>
+              <li><code style="color:#79c0ff; font-weight:bold;">grep [pat] [file]</code> — Search text matching a pattern</li>
+              <li><code style="color:#79c0ff; font-weight:bold;">sort -u [file]</code> — Sort alphabetically and remove duplicates</li>
+              <li><code style="color:#79c0ff; font-weight:bold;">find [dir] -name [pat]</code> — Locate files by name & size filters</li>
+              <li><code style="color:#79c0ff; font-weight:bold;">mv [old] [new]</code> — Move or rename a file</li>
+              <li><code style="color:#79c0ff; font-weight:bold;">mkdir [dir]</code> — Create a new empty folder</li>
+              <li><code style="color:#79c0ff; font-weight:bold;">touch [file]</code> — Create a new empty file</li>
+            </ul>
+          </div>
+          <div>
+            <strong style="color:var(--wh); display:block; margin-bottom:6px; border-bottom:1px solid var(--br); padding-bottom:4px;">3. System & Process Management</strong>
+            <ul style="list-style:none; padding:0; margin:0; line-height:1.8;">
+              <li><code style="color:#79c0ff; font-weight:bold;">ps aux</code> — Report snapshot of active processes</li>
+              <li><code style="color:#79c0ff; font-weight:bold;">sleep [sec]</code> — Pause terminal for set seconds</li>
+              <li><code style="color:#79c0ff; font-weight:bold;">pgrep [name]</code> — Search process ID (PID) by name</li>
+              <li><code style="color:#79c0ff; font-weight:bold;">kill [PID]</code> — Terminate running process by ID</li>
+              <li><code style="color:#79c0ff; font-weight:bold;">xargs</code> — Run command using inputs as arguments</li>
+              <li><code style="color:#79c0ff; font-weight:bold;">chmod [mode] [file]</code> — Set/change file permissions</li>
+            </ul>
+          </div>
+          <div>
+            <strong style="color:var(--wh); display:block; margin-bottom:6px; border-bottom:1px solid var(--br); padding-bottom:4px;">4. Processing & Transformations</strong>
+            <ul style="list-style:none; padding:0; margin:0; line-height:1.8;">
+              <li><code style="color:#79c0ff; font-weight:bold;">awk -F'[sep]' '{print $[col]}'</code> — Extract dynamic table column</li>
+              <li><code style="color:#79c0ff; font-weight:bold;">sed -i 's/[old]/[new]/g' [file]</code> — Replace text in-place</li>
+            </ul>
+          </div>
+          <div>
+            <strong style="color:var(--wh); display:block; margin-bottom:6px; border-bottom:1px solid var(--br); padding-bottom:4px;">5. Terminal Operators</strong>
+            <ul style="list-style:none; padding:0; margin:0; line-height:1.8;">
+              <li><code style="color:#bc8cff; font-weight:bold;">| (Pipe)</code> — Feed left output as input to the right command</li>
+              <li><code style="color:#bc8cff; font-weight:bold;">> (Redirection)</code> — Write/overwrite command output into a file</li>
+              <li><code style="color:#bc8cff; font-weight:bold;">& (Background)</code> — Run command in the background</li>
+              <li><code style="color:#bc8cff; font-weight:bold;">&& (Logical AND)</code> — Chain commands (runs right if left succeeds)</li>
+            </ul>
+          </div>
+        </div>
+      `
+    };
+
+    window.showInfoModal = function(type) {
+      const modal = document.getElementById('info-modal');
+      const title = document.getElementById('info-title');
+      const content = document.getElementById('info-content');
+      
+      if (type === 'howtoplay') {
+        title.textContent = 'How to Play';
+        content.innerHTML = INFO_CONTENT.howtoplay;
+      } else if (type === 'syntax') {
+        title.textContent = 'Syntax Guide';
+        content.innerHTML = INFO_CONTENT.syntax;
+      }
+      
+      modal.style.display = 'flex';
+    };
+
+    window.closeInfoModal = function() {
+      document.getElementById('info-modal').style.display = 'none';
+    };
 
     function getGuestName() {
       let name = localStorage.getItem('shellShockGuestName');
