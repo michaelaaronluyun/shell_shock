@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Results - Shell Shock</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4"></script>
+<script src="supabase.js"></script>
+</head>
+<body>
+<div id="root" class="results-page">
+  <div class="tb"><div class="dots"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div></div><div class="tbtxt" id="r-tb">Results</div><div></div></div>
+  <div class="res-hero">
+    <div class="res-grade" id="r-grade"></div>
+    <div class="res-score" id="r-score">0</div>
+    <div class="res-sub" id="r-sub"></div>
+  </div>
+  <div class="res-body">
+    <div class="tlog">
+      <div class="tl-hdr"><span style="width:18px">#</span><span style="width:16px"></span><span style="flex:1">Task</span><span style="width:56px;text-align:right">Time</span><span style="width:52px;text-align:right">Points</span></div>
+      <div id="r-log"></div>
+    </div>
+    <div class="res-acts">
+      <button class="btn" onclick="location.href='game.html'">play again</button>
+      <button class="btn btn-y" onclick="location.href='difficulty.html'">change difficulty</button>
+      <button class="btn" style="border-color:var(--br);color:var(--gr);" onclick="location.href='index.html'">menu</button>
+    </div>
+  </div>
+</div>
+
+<script src="game.js"></script>
+<script>
+// Initialize Supabase
+window.addEventListener('load', async () => {
+  await initSupabase();
+  if (!getCurrentUser()) {
+    await signInAnonymously();
+  }
+  displayResults();
+});
+
+function displayResults() {
+  // Display results
+  const pct = G.log.filter(x => x.done).length / G.tasks.length;
+  const grade = pct === 1 ? 'S RANK — FLAWLESS' : pct >= .8 ? 'A RANK — EXCELLENT' : pct >= .6 ? 'B RANK — SOLID' : pct >= .4 ? 'C RANK — KEEP GOING' : 'F RANK — KEEP PRACTICING';
+  const gradeColor = pct === 1 ? 'var(--g)' : pct >= .8 ? 'var(--c)' : pct >= .6 ? 'var(--y)' : 'var(--r)';
+
+  document.getElementById('r-grade').textContent = grade;
+  document.getElementById('r-grade').style.color = gradeColor;
+  document.getElementById('r-tb').textContent = G.diff + ' · results';
+  document.getElementById('r-score').textContent = G.score;
+  document.getElementById('r-score').style.color = gradeColor;
+  document.getElementById('r-sub').textContent = G.log.filter(x => x.done).length + '/' + G.tasks.length + ' tasks completed · ' + G.diff + ' mode';
+
+  document.getElementById('r-log').innerHTML = G.log.map((t, i) => `
+    <div class="tl-row">
+      <span class="tl-i">${i + 1}</span>
+      <span class="tl-s" style="color:${t.done ? 'var(--g)' : 'var(--r)'}">${t.done ? '✓' : '✗'}</span>
+      <span class="tl-n" style="color:${t.done ? 'var(--wh)' : 'var(--gr)'}">${t.title}</span>
+      <span class="tl-t">${t.done ? t.time.toFixed(1) + 's' : '—'}</span>
+      <span class="tl-p ${t.done ? 'ok' : 'no'}">${t.done ? '+' + t.pts : '0'}</span>
+    </div>`).join('');
+}
+</script>
+</body>
+</html>

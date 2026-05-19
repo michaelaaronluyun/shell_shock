@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Select Difficulty - Shell Shock</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4"></script>
+<script src="supabase.js"></script>
+</head>
+<body>
+<div id="root">
+  <div class="tb"><div class="dots"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div></div><div class="tbtxt">Select Difficulty</div><button class="btn btn-sm" style="border-color:var(--br);color:var(--gr);" onclick="location.href='index.html'">← back</button></div>
+  <div class="diff-page">
+    <div class="diff-wrap">
+      <div class="pg-title">Choose your difficulty</div>
+      <div class="pg-sub">Each difficulty unlocks a different task pool with higher point rewards.</div>
+      <div class="diff-cards">
+        <div class="diff-card sel-easy" id="dc-easy" onclick="selectDiff('easy')">
+          <div class="diff-icon" style="color:var(--g)">[ ]</div>
+          <div class="diff-info">
+            <div class="diff-name e">easy</div>
+            <div class="diff-desc">Basic commands: pwd, ls, echo, whoami, date<br>15s per task · 5 tasks</div>
+          </div>
+          <div class="diff-pts">up to<br><span style="color:var(--g);font-size:15px;font-weight:700">150</span><br>pts/task</div>
+        </div>
+        <div class="diff-card" id="dc-normal" onclick="selectDiff('normal')">
+          <div class="diff-icon" style="color:var(--y)">[~]</div>
+          <div class="diff-info">
+            <div class="diff-name n">normal</div>
+            <div class="diff-desc">Flags & pipes: grep, wc, sort, head, ps<br>25–30s per task · 5 tasks</div>
+          </div>
+          <div class="diff-pts">up to<br><span style="color:var(--y);font-size:15px;font-weight:700">330</span><br>pts/task</div>
+        </div>
+        <div class="diff-card" id="dc-hard" onclick="selectDiff('hard')">
+          <div class="diff-icon" style="color:var(--r)">[!]</div>
+          <div class="diff-info">
+            <div class="diff-name h">hard</div>
+            <div class="diff-desc">Power tools: awk, sed, chmod, xargs, piping<br>30–40s per task · 5 tasks</div>
+          </div>
+          <div class="diff-pts">up to<br><span style="color:var(--r);font-size:15px;font-weight:700">600</span><br>pts/task</div>
+        </div>
+      </div>
+      <div class="diff-actions">
+        <button class="btn" onclick="startGame()">▶ start run</button>
+        <button class="btn" style="border-color:var(--br);color:var(--gr);" onclick="location.href='index.html'">cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="game.js"></script>
+<script>
+function selectDiff(d) {
+  G.pickDiff(d);
+  ['easy', 'normal', 'hard'].forEach(x => {
+    const el = document.getElementById('dc-' + x);
+    el.className = 'diff-card' + (x === d ? ' sel-' + x : '');
+  });
+}
+
+function startGame() {
+  startGameSession();
+}
+
+// Initialize Supabase
+window.addEventListener('load', async () => {
+  await initSupabase();
+  if (!getCurrentUser()) {
+    await signInAnonymously();
+  }
+  // Initialize
+  selectDiff(G.diff);
+});
+</script>
+</body>
+</html>

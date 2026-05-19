@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game - Shell Shock</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4"></script>
+<script src="supabase.js"></script>
+</head>
+<body>
+<div id="root" class="game-page">
+  <div class="tb"><div class="dots"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div></div><div class="tbtxt" id="g-title">run</div><button class="btn btn-r btn-sm" onclick="quitGame()">quit</button></div>
+  <div class="hud">
+    <div class="hi"><div class="hl">Score</div><div class="hv" id="h-score" style="color:var(--g)">0</div></div>
+    <div class="hsep"></div>
+    <div class="hi"><div class="hl">Task</div><div class="hv" id="h-task" style="color:var(--c)">1/5</div></div>
+    <div class="hsep"></div>
+    <div class="hi"><div class="hl">Streak</div><div class="hv" id="h-streak" style="color:var(--y)">0</div></div>
+    <div class="hsep"></div>
+    <div class="hi hud-timer">
+      <div class="hl">Time <span id="h-time" style="color:var(--wh)">30s</span></div>
+      <div class="tbar-t"><div class="tbar-f" id="tbar" style="width:100%"></div></div>
+    </div>
+  </div>
+  <div class="task-panel">
+    <span class="tbadge" id="g-badge">easy</span><span class="task-ttl" id="g-ttl"></span>
+    <div class="task-dsc" id="g-dsc"></div>
+    <div class="task-hnt" id="g-hnt"></div>
+  </div>
+  <div class="term" id="term"></div>
+  <div class="inp-row">
+    <span class="ps">user@bashblitz:~$</span>
+    <input id="ci" type="text" placeholder="type your command..." autocomplete="off" spellcheck="false" autocapitalize="off" />
+  </div>
+</div>
+
+<script src="game.js"></script>
+<script>
+// Initialize Supabase before starting game
+window.addEventListener('load', async () => {
+  await initSupabase();
+  if (!getCurrentUser()) {
+    await signInAnonymously();
+  }
+  startGameUI();
+});
+
+function startGameUI() {
+let gameTimer = null;
+let commandInput = document.getElementById('ci');
+
+// Initialize game display
+document.getElementById('g-title').textContent = G.diff + ' · run';
+
+function addLine(type, text) {
+  const out = document.getElementById('term');
+  if (text === undefined || text === null) return;
+  text.split('\n').forEach(l => {
+    const d = document.createElement('div');
+    const e = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    if (type === 'cmd') d.innerHTML = '<span class="t-prompt">user@bashblitz:~$ </span><span class="t-cmd">' + e(l) + '</span>';
+    else if (type === 'ok') d.innerHTML = '<span class="t-ok">' + e(l) + '</span>';
+    else if (type === 'err') d.innerHTML = '<span class="t-err">' + e(l) + '</span>';
+    else if (type === 'inf') d.innerHTML = '<span class="t-inf">' + e(l) + '</span>';
+    else d.innerHTML = '<span class="t-out">' + e(l) + '</span>';
+    out.appendChild(d);
+  });
+  out.scrollTop = out.scrollHeight;
+}
+
+function updateHUD() {
+  document.getElementById('h-score').textContent = G.score;
+  document.getElementById('h-streak').textContent = '🔥 ' + G.streak;
+}
+
+function loadTask() {
+  const t = G.tasks[G.cur];
+  if (!t) {
+    endGame(true);
+    return;
+  }
+  G.timeMax = t.time;
+  G.timeLeft = t.time;
+  G.tStart = Date.now();
+  
+  document.getElementById('g-badge').textContent = t.diff;
+  document.getElementById('g-badge').className = 'tbadge ' + t.diff;
+  document.getElementById('g-ttl').textContent = t.title;
+  document.getElementById('g-dsc').textContent = t.desc;
+  document.getElementById('g-hnt').textContent = t.hint;
+  document.getElementById('h-task').textContent = (G.cur + 1) + '/' + G.tasks.length;
+  
+  clearInterval(gameTimer);
+  gameTimer = setInterval(tick, 100);
+  addLine('inf', '\n[ Task ' + (G.cur + 1) + '/5 ] ' + t.title);
+}
+
+function tick() {
+  G.timeLeft = Math.max(0, G.timeLeft - 0.1);
+  const p = G.timeLeft / G.timeMax;
+  const b = document.getElementById('tbar');
+  b.style.width = (p * 100) + '%';
+  b.style.background = p > .5 ? 'var(--g)' : p > .25 ? 'var(--y)' : 'var(--r)';
+  const tEl = document.getElementById('h-time');
+  tEl.textContent = Math.ceil(G.timeLeft) + 's';
+  tEl.style.color = p > .5 ? 'var(--wh)' : p > .25 ? 'var(--y)' : 'var(--r)';
+  if (G.timeLeft <= 0) {
+    clearInterval(gameTimer);
+    onTimeout();
+  }
+}
+
+function onTimeout() {
+  const t = G.tasks[G.cur];
+  G.streak = 0;
+  updateHUD();
+  G.logTask({ title: t.title, time: t.time, pts: 0, done: false });
+  addLine('err', '✗ Time\'s up!');
+  G.cur++;
+  G.save();
+  if (G.cur >= G.tasks.length) {
+    setTimeout(() => endGame(true), 800);
+    return;
+  }
+  setTimeout(loadTask, 600);
+}
+
+function submitCmd(cmd) {
+  const t = G.tasks[G.cur];
+  if (!t) return;
+  
+  addLine('cmd', cmd);
+  const elapsed = (Date.now() - G.tStart) / 1000;
+  
+  if (t.check(cmd)) {
+    clearInterval(gameTimer);
+    if (t.sim) addLine('ok', t.sim);
+    else if (t.sim === '') addLine('ok', '(command executed)');
+    
+    const speed = Math.max(0, Math.floor((G.timeMax - elapsed) / G.timeMax * t.pts * 0.5));
+    G.streak++;
+    const sx = G.streak >= 3 ? Math.floor(t.pts * .25 * Math.min(G.streak - 2, 3)) : 0;
+    const total = t.pts + speed + sx;
+    G.score += total;
+    
+    G.logTask({ title: t.title, time: elapsed, pts: total, done: true });
+    updateHUD();
+    
+    let msg = '✓ Correct! +' + t.pts;
+    if (speed > 0) msg += ' +' + speed + ' speed';
+    if (sx > 0) msg += ' +' + sx + ' streak';
+    addLine('ok', msg);
+    
+    G.cur++;
+    G.save();
+    
+    if (G.cur >= G.tasks.length) {
+      setTimeout(() => endGame(true), 700);
+      return;
+    }
+    setTimeout(loadTask, 500);
+  } else if (cmd.trim()) {
+    addLine('err', 'bash: command check failed. Try again.');
+    G.streak = 0;
+    updateHUD();
+    G.save();
+  }
+}
+
+function endGame(completed) {
+  clearInterval(gameTimer);
+  G.finishGame(completed);
+  window.location.href = 'results.html';
+}
+
+function quitGame() {
+  if (confirm('Quit the current game?')) {
+    G.reset();
+    G.save();
+    window.location.href = 'index.html';
+  }
+}
+
+// Start the game
+addLine('inf', '[Bash Blitz] Type the correct Linux command. Faster = more points!');
+addLine('out', '─'.repeat(44));
+loadTask();
+commandInput.focus();
+
+// Input handling
+commandInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const v = commandInput.value.trim();
+    if (v) {
+      G.hist.unshift(v);
+      G.histIdx = -1;
+      submitCmd(v);
+      commandInput.value = '';
+    }
+  } else if (e.key === 'ArrowUp') {
+    G.histIdx = Math.min(G.histIdx + 1, G.hist.length - 1);
+    if (G.hist[G.histIdx]) commandInput.value = G.hist[G.histIdx];
+    e.preventDefault();
+  } else if (e.key === 'ArrowDown') {
+    G.histIdx = Math.max(G.histIdx - 1, -1);
+    commandInput.value = G.histIdx >= 0 ? G.hist[G.histIdx] : '';
+    e.preventDefault();
+  }
+});
+}
+</script>
+</body>
+</html>

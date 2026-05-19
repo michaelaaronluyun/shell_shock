@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shell Shock - Linux Command Speedrun Game</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4"></script>
+<script src="supabase.js"></script>
+</head>
+<body>
+<div id="root">
+  <div class="tb"><div class="dots"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div></div><div class="tbtxt">Shell Shock</div><div class="tbright"></div></div>
+  <div class="splash-page">
+    <div class="logo"><pre style="font-size: 0.5em; margin: 0;">   ______ ________   __     
+  / __/ // / __/ /  / /     
+ _\ \/ _  / _// /__/ /__    
+/___/_//_/___/____/____/_ __
+  / __/ // / __ \/ ___/ //_/
+ _\ \/ _  / /_/ / /__/ ,<   
+/___/_//_/\____/\___/_/|_|  
+                            </pre></div>
+    <div class="logo-sub">race the clock · master the terminal</div>
+    <div class="splash-ascii">
+$ ls challenges/<br>
+<span style="color:#39d353">✓</span> pipe_master   <span style="color:#39d353">12.3s  +420pts</span><br>
+<span style="color:#39d353">✓</span> grep_hunter    <span style="color:#39d353">8.7s   +380pts</span><br>
+<span style="color:#e3b341">◎</span> awk_wizard    <span style="color:#e3b341">30.0s  +200pts</span><br>
+<span style="color:#f85149">✗</span> sed_surgeon   <span style="color:#f85149">timeout  +0pts</span>
+    </div>
+    <div class="splash-stats">
+      <div><div class="ss-v" id="s-best">—</div><div class="ss-l">Best Score</div></div>
+      <div><div class="ss-v" id="s-runs">0</div><div class="ss-l">Runs</div></div>
+      <div><div class="ss-v" id="s-tasks">0</div><div class="ss-l">Tasks Done</div></div>
+    </div>
+    <div class="splash-btns">
+      <button class="btn" onclick="location.href='difficulty.html'">▶ play</button>
+      <button class="btn-y btn" onclick="location.href='leaderboard.html'">leaderboard</button>
+    </div>
+  </div>
+</div>
+
+<script src="game.js"></script>
+<script>
+// Initialize Supabase
+window.addEventListener('load', async () => {
+  await initSupabase();
+  if (!getCurrentUser()) {
+    await signInAnonymously();
+  }
+  // Update stats (will load from localStorage or Supabase)
+  document.getElementById('s-best').textContent = G.stats.best !== null ? G.stats.best : '—';
+  document.getElementById('s-runs').textContent = G.stats.runs;
+  document.getElementById('s-tasks').textContent = G.stats.totalTasks;
+});
+</script>
+</body>
+</html>

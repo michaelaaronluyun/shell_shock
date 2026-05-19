@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leaderboard - Shell Shock</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.38.4"></script>
+<script src="supabase.js"></script>
+</head>
+<body>
+<div id="root" class="lb-page">
+  <div class="tb"><div class="dots"><div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div></div><div class="tbtxt">Leaderboard</div><button class="btn btn-sm" style="border-color:var(--br);color:var(--gr);" onclick="location.href='index.html'">← back</button></div>
+  <div class="lb-body">
+    <div id="lb-content"></div>
+    <div class="lb-acts">
+      <button class="btn" onclick="location.href='difficulty.html'">▶ play</button>
+      <button class="btn btn-r btn-sm" onclick="clearLeaderboard()">clear scores</button>
+    </div>
+  </div>
+</div>
+
+<script src="game.js"></script>
+<script>
+async function renderLeaderboard() {
+  // Load from Supabase first, fall back to localStorage
+  if (isSupabaseEnabled()) {
+    await G.loadLeaderboardFromSupabase();
+  }
+  
+  const el = document.getElementById('lb-content');
+  if (!G.lb.length) {
+    el.innerHTML = '<div class="lb-empty">No runs yet. Play a game to get on the board!</div>';
+    return;
+  }
+  el.innerHTML = '<div class="lb-table"><div class="lb-hdr"><span>Rank</span><span>Score</span><span style="text-align:right">Tasks</span><span style="text-align:right">Diff</span><span style="text-align:right">Time</span></div>' +
+    G.lb.map((r, i) => {
+      const cls = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+      const medals = ['🥇', '🥈', '🥉'];
+      return `<div class="lb-row ${cls}">
+        <span class="lb-rank">${medals[i] || '#' + (i + 1)}</span>
+        <span class="lb-score">${r.score}</span>
+        <span class="lb-tasks">${r.done}/${r.total}</span>
+        <span class="lb-diff ${r.diff}">${r.diff}</span>
+        <span style="color:var(--gr);text-align:right;font-size:11px">${new Date(r.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+      </div>`;
+    }).join('') + '</div>';
+}
+
+async function clearLeaderboard() {
+  if (confirm('Clear all leaderboard scores?')) {
+    await G.clearLeaderboard();
+    await renderLeaderboard();
+  }
+}
+
+// Initialize Supabase and render leaderboard
+window.addEventListener('load', async () => {
+  await initSupabase();
+  if (!getCurrentUser()) {
+    await signInAnonymously();
+  }
+  await renderLeaderboard();
+});
+</script>
+</body>
+</html>
