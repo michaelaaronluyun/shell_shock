@@ -48,7 +48,7 @@ async function renderLeaderboard() {
     el.innerHTML = '<div class="lb-empty">No runs yet. Play a game to get on the board!</div>';
     return;
   }
-  el.innerHTML = '<div class="lb-table" style="font-size:14px;"><div class="lb-hdr"><span>Rank</span><span style="flex:1">Username</span><span>Score</span><span style="text-align:right">Tasks</span><span style="text-align:right">Diff</span><span style="text-align:right">Time</span></div>' +
+  el.innerHTML = '<div class="lb-table" style="font-size:14px;"><div class="lb-hdr"><span>Rank</span><span style="flex:1">Username</span><span style="text-align:right">Score</span><span style="text-align:right">Tasks</span><span style="text-align:right">Diff</span><span style="text-align:right">Time</span></div>' +
     G.lb.map((r, i) => {
       const cls = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
       const medals = ['🥇', '🥈', '🥉'];

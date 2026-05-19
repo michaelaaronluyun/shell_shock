@@ -44,6 +44,18 @@
   <div id="countdown-text" style="font-size:16px; color:var(--gr); text-transform:uppercase; letter-spacing:2px; margin-top:10px;">Get Ready</div>
 </div>
 
+<!-- Quit Confirmation Modal -->
+<div id="quit-modal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(13,17,23,0.85); z-index:250; display:none; justify-content:center; align-items:center; font-family:'Syne',sans-serif;">
+  <div style="background:var(--sf); border:1px solid var(--br); border-radius:12px; padding:30px; text-align:center; max-width:320px; width:90%; box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
+    <div style="font-size:22px; font-weight:800; color:var(--r); margin-bottom:12px;">Abandon Mission?</div>
+    <div style="font-size:12px; color:var(--gr); line-height:1.6; margin-bottom:24px; font-family:'JetBrains Mono',monospace;">Quitting now will reset your current progress and you will lose your score.</div>
+    <div style="display:flex; gap:12px; justify-content:center;">
+      <button class="btn btn-r" onclick="confirmQuit()" style="padding:8px 20px;">Yes, Quit</button>
+      <button class="btn" onclick="closeQuitModal()" style="border-color:var(--gr); color:var(--gr); padding:8px 20px;" onmouseover="this.style.background='var(--gr)'; this.style.color='var(--bg)';" onmouseout="this.style.background='transparent'; this.style.color='var(--gr)';">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <script type="module" src="game.js"></script>
 <script>
 // Initialize Supabase before starting game
@@ -78,11 +90,19 @@ function addLine(type, text) {
   text.split('\n').forEach(l => {
     const d = document.createElement('div');
     const e = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    if (type === 'cmd') d.innerHTML = '<span class="t-prompt">user@bashblitz:~$ </span><span class="t-cmd">' + e(l) + '</span>';
-    else if (type === 'ok') d.innerHTML = '<span class="t-ok">' + e(l) + '</span>';
-    else if (type === 'err') d.innerHTML = '<span class="t-err">' + e(l) + '</span>';
-    else if (type === 'inf') d.innerHTML = '<span class="t-inf">' + e(l) + '</span>';
-    else d.innerHTML = '<span class="t-out">' + e(l) + '</span>';
+    if (l === '') {
+      d.innerHTML = '&nbsp;';
+    } else if (type === 'cmd') {
+      d.innerHTML = '<span class="t-prompt">user@bashblitz:~$ </span><span class="t-cmd">' + e(l) + '</span>';
+    } else if (type === 'ok') {
+      d.innerHTML = '<span class="t-ok">' + e(l) + '</span>';
+    } else if (type === 'err') {
+      d.innerHTML = '<span class="t-err">' + e(l) + '</span>';
+    } else if (type === 'inf') {
+      d.innerHTML = '<span class="t-inf">' + e(l) + '</span>';
+    } else {
+      d.innerHTML = '<span class="t-out">' + e(l) + '</span>';
+    }
     out.appendChild(d);
   });
   out.scrollTop = out.scrollHeight;
@@ -154,8 +174,8 @@ function submitCmd(cmd) {
   
   if (t.check(cmd)) {
     clearInterval(gameTimer);
-    if (t.sim) addLine('ok', t.sim);
-    else if (t.sim === '') addLine('ok', '(command executed)');
+    if (t.sim) addLine('out', t.sim);
+    else if (t.sim === '') addLine('out', '(command executed)');
     
     const speed = Math.max(0, Math.floor((G.timeMax - elapsed) / G.timeMax * t.pts * 0.5));
     G.streak++;
@@ -194,13 +214,33 @@ function endGame(completed) {
   window.location.href = 'results.html';
 }
 
-function quitGame() {
-  if (confirm('Quit the current game?')) {
-    G.reset();
-    G.save();
-    sessionStorage.removeItem('shellShockTasks');
-    window.location.href = 'index.html';
+window.isPaused = false;
+
+window.quitGame = function() {
+  commandInput.disabled = true;
+  if (gameTimer) {
+    clearInterval(gameTimer);
+    gameTimer = null;
+    window.isPaused = true;
   }
+  document.getElementById('quit-modal').style.display = 'flex';
+}
+
+window.closeQuitModal = function() {
+  document.getElementById('quit-modal').style.display = 'none';
+  commandInput.disabled = false;
+  commandInput.focus();
+  if (window.isPaused) {
+    gameTimer = setInterval(tick, 100);
+    window.isPaused = false;
+  }
+}
+
+window.confirmQuit = function() {
+  G.reset();
+  G.save();
+  sessionStorage.removeItem('shellShockTasks');
+  window.location.href = 'index.html';
 }
 
 function startCountdown(onComplete) {
