@@ -50,6 +50,16 @@ function startGameUI() {
 let gameTimer = null;
 let commandInput = document.getElementById('ci');
 
+// Restore tasks from sessionStorage
+G.restoreTasks();
+
+// Check if tasks are loaded - if not, go back to difficulty selection
+if (!G.tasks || G.tasks.length === 0) {
+  console.warn('No tasks loaded. Redirecting to difficulty selection...');
+  window.location.href = 'difficulty.html';
+  return;
+}
+
 // Initialize game display
 document.getElementById('g-title').textContent = G.diff + ' · run';
 
@@ -171,6 +181,7 @@ function submitCmd(cmd) {
 function endGame(completed) {
   clearInterval(gameTimer);
   G.finishGame(completed);
+  sessionStorage.removeItem('shellShockTasks');
   window.location.href = 'results.html';
 }
 
@@ -178,6 +189,7 @@ function quitGame() {
   if (confirm('Quit the current game?')) {
     G.reset();
     G.save();
+    sessionStorage.removeItem('shellShockTasks');
     window.location.href = 'index.html';
   }
 }

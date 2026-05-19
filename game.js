@@ -42,6 +42,8 @@ class GameState {
     } else {
       this.reset();
     }
+    // Always ensure tasks array exists (it's not saved to localStorage)
+    if (!this.tasks) this.tasks = [];
   }
 
   reset() {
@@ -61,7 +63,23 @@ class GameState {
   }
 
   save() {
-    localStorage.setItem('shellShockGame', JSON.stringify(this));
+    // Don't save tasks array - functions can't be serialized to JSON
+    // Tasks are recreated by setTasks() when a new game starts
+    const data = {
+      diff: this.diff,
+      cur: this.cur,
+      score: this.score,
+      streak: this.streak,
+      timeLeft: this.timeLeft,
+      timeMax: this.timeMax,
+      tStart: this.tStart,
+      log: this.log,
+      hist: this.hist,
+      histIdx: this.histIdx,
+      stats: this.stats,
+      lb: this.lb
+    };
+    localStorage.setItem('shellShockGame', JSON.stringify(data));
   }
 
   pickDiff(d) {
@@ -77,7 +95,31 @@ class GameState {
     this.log = [];
     this.hist = [];
     this.histIdx = -1;
+    // Save tasks to sessionStorage (persists across page navigation)
+    // Store only the essential data, not the check functions
+    const taskData = tasks.map(t => ({
+      title: t.title,
+      desc: t.desc,
+      hint: t.hint,
+      time: t.time,
+      pts: t.pts,
+      sim: t.sim,
+      diff: t.diff
+    }));
+    sessionStorage.setItem('shellShockTasks', JSON.stringify(taskData));
     this.save();
+  }
+  
+  restoreTasks() {
+    const stored = sessionStorage.getItem('shellShockTasks');
+    if (stored) {
+      const taskData = JSON.parse(stored);
+      // Restore with original check functions from TASKS
+      this.tasks = taskData.map(data => {
+        const original = Object.values(TASKS).flat().find(t => t.title === data.title);
+        return original || data;
+      });
+    }
   }
 
   updateTask(index, data) {
